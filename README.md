@@ -19,3 +19,7 @@ View your app in AI Studio: https://ai.studio/apps/df5ef543-5e77-413f-9a04-ea024
    `npm run dev`
 
 # sharas-food
+
+## Deploy
+
+npx wrangler pages deploy dist --project-name sharas-food
