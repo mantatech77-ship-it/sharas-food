@@ -50,7 +50,20 @@ export default function Storefront() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deliveryEstimate, setDeliveryEstimate] = useState('Dibuat dengan cinta, dinikmati besok lusa!');
   
+  const [isScrolled, setIsScrolled] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 60);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeCategoryId]);
 
   const handleLogoClick = () => {
     setLogoClicks(prev => prev + 1);
@@ -232,70 +245,86 @@ export default function Storefront() {
       {/* Menu / Home Content */}
       {location.pathname === '/' && (
         <React.Fragment>
-          {/* Header */}
-          <header className="bg-white sticky top-0 z-30 shadow-sm px-4 py-4 md:px-8 border-b border-sharas-light/50">
-            <div className="max-w-5xl mx-auto flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div 
-                  className="flex items-center gap-2 cursor-pointer select-none group" 
-                  onClick={handleLogoClick}
-                >
-                  <div className="flex items-center">
-                    <span className="font-cursive text-3xl lowercase text-sharas-primary tracking-tight leading-none mb-1">sharas</span>
-                    <div className="flex items-end ml-1">
-                       <svg width="20" height="20" viewBox="0 0 24 24" className="rotate-[15deg] fill-sharas-primary translate-y-[2px]">
-                         <path d="M12 3C12 3 16 7 16 13C16 19 12 23 12 23C12 23 8 19 8 13C8 7 12 3 12 3Z" />
-                       </svg>
-                       <svg width="16" height="16" viewBox="0 0 24 24" className="rotate-[40deg] ml-[-8px] fill-sharas-accent">
-                         <path d="M12 3C12 3 16 7 16 13C16 19 12 23 12 23C12 23 8 19 8 13C8 7 12 3 12 3Z" />
-                       </svg>
-                    </div>
+          {/* Top Branding Section (Scrolls away) */}
+          <div className="bg-white px-4 py-4 md:px-8 border-b border-stone-50">
+            <div className="max-w-5xl mx-auto flex items-center justify-between">
+              <div 
+                className="flex items-center gap-2 cursor-pointer select-none group" 
+                onClick={handleLogoClick}
+              >
+                <div className="flex items-center">
+                  <span className="font-cursive text-3xl lowercase text-sharas-primary tracking-tight leading-none mb-1">sharas</span>
+                  <div className="flex items-end ml-1">
+                    <svg width="20" height="20" viewBox="0 0 24 24" className="rotate-[15deg] fill-sharas-primary translate-y-[2px]">
+                      <path d="M12 3C12 3 16 7 16 13C16 19 12 23 12 23C12 23 8 19 8 13C8 7 12 3 12 3Z" />
+                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" className="rotate-[40deg] ml-[-8px] fill-sharas-accent">
+                      <path d="M12 3C12 3 16 7 16 13C16 19 12 23 12 23C12 23 8 19 8 13C8 7 12 3 12 3Z" />
+                    </svg>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => navigate('/track-order')} className="text-stone-500 bg-stone-100 hover:bg-sharas-light rounded-full h-10 w-10">
-                  <Clock size={20} />
-                </Button>
               </div>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/track-order')} className="text-stone-500 bg-stone-100 hover:bg-sharas-light rounded-full h-10 w-10">
+                <Clock size={20} />
+              </Button>
+            </div>
+          </div>
 
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Mau minum apa hari ini?" 
-                  className="w-full bg-stone-100 text-stone-800 placeholder:text-stone-400 rounded-full py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sharas-primary transition-all font-medium"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* Categories */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-                <button
-                  className={cn(
-                    "whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all",
-                    activeCategoryId === 'all' 
-                      ? "bg-sharas-primary text-white shadow-md" 
-                      : "bg-white text-stone-600 border border-stone-200 hover:border-sharas-secondary"
-                  )}
-                  onClick={() => setActiveCategoryId('all')}
-                >
-                  Semua
-                </button>
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
+          {/* Sticky Header (Search & Search Filters) */}
+          <header className={cn(
+            "bg-white sticky top-0 z-30 transition-all duration-300 border-b border-sharas-light/50",
+            isScrolled ? "shadow-md py-2" : "py-4"
+          )}>
+            <div className="max-w-5xl mx-auto px-4 md:px-8 flex flex-col gap-3">
+              <div className={cn(
+                "flex flex-col gap-3 transition-all duration-300",
+                isScrolled && "gap-2"
+              )}>
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Mau minum apa hari ini?" 
                     className={cn(
-                      "whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all",
-                      activeCategoryId === cat.id 
+                      "w-full bg-stone-100 text-stone-800 placeholder:text-stone-400 rounded-full pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sharas-primary transition-all font-medium",
+                      isScrolled ? "py-2" : "py-3"
+                    )}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {/* Categories */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+                  <button
+                    className={cn(
+                      "whitespace-nowrap rounded-full text-xs font-bold transition-all",
+                      isScrolled ? "px-4 py-1.5" : "px-5 py-2.5",
+                      activeCategoryId === 'all' 
                         ? "bg-sharas-primary text-white shadow-md" 
                         : "bg-white text-stone-600 border border-stone-200 hover:border-sharas-secondary"
                     )}
-                    onClick={() => setActiveCategoryId(cat.id)}
+                    onClick={() => setActiveCategoryId('all')}
                   >
-                    {cat.name}
+                    Semua
                   </button>
-                ))}
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      className={cn(
+                        "whitespace-nowrap rounded-full text-xs font-bold transition-all",
+                        isScrolled ? "px-4 py-1.5" : "px-5 py-2.5",
+                        activeCategoryId === cat.id 
+                          ? "bg-sharas-primary text-white shadow-md" 
+                          : "bg-white text-stone-600 border border-stone-200 hover:border-sharas-secondary"
+                      )}
+                      onClick={() => setActiveCategoryId(cat.id)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </header>

@@ -17,9 +17,3 @@ View your app in AI Studio: https://ai.studio/apps/df5ef543-5e77-413f-9a04-ea024
 2. Set the `GEMINI_API_KEY` in local env to your Gemini API key
 3. Run the app:
    `npm run dev`
-
-# sharas-food
-
-## Deploy
-
-npx wrangler pages deploy dist --project-name sharas-food
