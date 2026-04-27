@@ -108,8 +108,10 @@ export default function AdminDashboard() {
     }
   };
 
+  const ALLOWED_ADMIN_EMAILS = ['mantatech77@gmail.com', 'bimantarasc@gmail.com'];
+
   const bootstrapAdmin = async () => {
-    if (user && user.email === 'mantatech77@gmail.com') {
+    if (user && user.email && ALLOWED_ADMIN_EMAILS.includes(user.email)) {
       try {
          await setDoc(doc(db, 'admins', user.uid), { email: user.email });
          setIsAdmin(true);
@@ -168,7 +170,7 @@ export default function AdminDashboard() {
               <h3 className="text-2xl font-black text-gray-800 italic uppercase">Akses Ditolak</h3>
               <p className="text-stone-600 font-medium text-sm">Akun ini tidak memiliki akses admin.</p>
             </div>
-            {user.email === 'mantatech77@gmail.com' && (
+            {user.email && ALLOWED_ADMIN_EMAILS.includes(user.email) && (
               <Button onClick={bootstrapAdmin} size="lg" className="w-full rounded-2xl bg-sharas-primary hover:bg-sharas-accent text-white">Jadikan Saya Admin</Button>
             )}
             <div className="pt-4 border-t border-stone-100">

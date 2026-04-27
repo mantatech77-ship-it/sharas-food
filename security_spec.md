@@ -9,7 +9,7 @@
    - Admins can list and update order status.
    - `totalPrice` must match the sum of item prices (optional but good, though logic in rules is hard for math on lists). We will at least validate basic types.
    - `status` can only be updated by Admins.
-3. **Admins**: Root admin (`mantatech77@gmail.com`) can bootstrap their own record. After that, only admins can manage the collection.
+3. **Admins**: Root admins (`mantatech77@gmail.com`, `bimantarasc@gmail.com`) can bootstrap their own record. After that, only admins can manage the collection.
 
 ## The Dirty Dozen Payloads (Attack Vectors)
 
@@ -84,12 +84,18 @@ describe("shara's Security Rules", () => {
     await assertFails(updateDoc(doc(authDb, "orders/order1"), { status: "confirmed" }));
   });
 
-  test("Root admin can bootstrap", async () => {
+  test("Root admins can bootstrap", async () => {
     const rootAdminDb = testEnv.authenticatedContext("admin_uid", { 
       email: "mantatech77@gmail.com", 
       email_verified: true 
     }).firestore();
     await assertSucceeds(setDoc(doc(rootAdminDb, "admins/admin_uid"), { email: "mantatech77@gmail.com" }));
+
+    const secondAdminDb = testEnv.authenticatedContext("admin_uid2", { 
+      email: "bimantarasc@gmail.com", 
+      email_verified: true 
+    }).firestore();
+    await assertSucceeds(setDoc(doc(secondAdminDb, "admins/admin_uid2"), { email: "bimantarasc@gmail.com" }));
   });
 });
 ```

@@ -72,7 +72,7 @@ service cloud.firestore {
     }
 
     function isAllowedEmail(email) {
-      return email in ['mantatech77@gmail.com', 'email-admin-lain@gmail.com'];
+      return email in ['mantatech77@gmail.com', 'bimantarasc@gmail.com'];
     }
 
     // ---------------------------------------------------------
