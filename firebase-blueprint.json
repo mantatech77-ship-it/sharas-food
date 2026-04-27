@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "A food item in the menu",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "categoryIds": { "type": "array" },
+        "available": { "type": "boolean" }
+      },
+      "required": ["name", "price", "categoryIds"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A category for food items",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer food order",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "items": { "type": "array" },
+        "totalPrice": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "deliveryDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "phoneNumber", "items", "totalPrice", "status"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "An administrator of the system",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "General application settings",
+      "type": "object",
+      "properties": {
+        "deliveryEstimate": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/menu_items/{itemId}": {
+      "schema": "MenuItem",
+      "description": "Collection of food menu items"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Collection of food categories"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Collection of customer orders"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of authorized administrators"
+    },
+    "/settings/{settingId}": {
+      "schema": "Setting",
+      "description": "Collection of application settings (e.g., config document)"
+    }
+  }
+}

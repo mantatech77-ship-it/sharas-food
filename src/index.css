@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sharas-primary: #8B5E3C;
+  --color-sharas-secondary: #D4B996;
+  --color-sharas-accent: #A67C52;
+  --color-sharas-light: #F7F1EA;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-cursive: "Playball", cursive;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Add cursive font for Sharas brand */
+@import url('https://fonts.googleapis.com/css2?family=Playball&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* Hide scrollbar on mobile by default */
+@media (max-width: 768px) {
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}

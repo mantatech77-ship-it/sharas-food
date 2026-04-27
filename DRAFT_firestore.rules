@@ -1,0 +1,164 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Primitives & Helpers
+    // ---------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ---------------------------------------------------------
+    // Entity Validations
+    // ---------------------------------------------------------
+
+    function isValidCategory(data) {
+      return data.keys().hasAll(['name', 'order']) 
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.order is number;
+    }
+
+    function isValidMenuItem(data) {
+      return data.keys().hasAll(['name', 'description', 'price', 'categoryIds', 'available'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.description is string && data.description.size() <= 1000
+        && data.price is number && data.price >= 0
+        && data.categoryIds is list && data.categoryIds.size() > 0 && data.categoryIds.size() <= 10
+        && data.available is bool
+        && (data.get('imageUrl', null) == null || (data.imageUrl is string && data.imageUrl.size() <= 2048));
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['customerName', 'phoneNumber', 'items', 'totalPrice', 'status', 'deliveryDate', 'createdAt'])
+        && data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100
+        && data.phoneNumber is string && data.phoneNumber.size() >= 5 && data.phoneNumber.size() <= 20
+        && data.items is list && data.items.size() > 0 && data.items.size() <= 50
+        && data.totalPrice is number && data.totalPrice >= 0
+        && data.status in ['pending', 'confirmed', 'completed', 'cancelled']
+        && data.deliveryDate is string && data.deliveryDate.size() == 10; // YYYY-MM-DD
+    }
+
+    function isValidSetting(data) {
+      return data.keys().hasAll(['deliveryEstimate', 'updatedAt'])
+        && data.deliveryEstimate is string && data.deliveryEstimate.size() <= 200;
+    }
+
+    function isAllowedEmail(email) {
+      return email in ['mantatech77@gmail.com', 'email-admin-lain@gmail.com'];
+    }
+
+    // ---------------------------------------------------------
+    // Collection Rules
+    // ---------------------------------------------------------
+
+    // 1. Admins
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isAdmin() || (isSignedIn() && request.auth.uid == adminId));
+      allow list: if isAdmin();
+      
+      // Hanya email di whitelist yang bisa mendaftarkan diri sebagai admin pertama kali
+      // Atau admin yang sudah ada bisa menambah admin baru (email tetap harus di whitelist)
+      allow create: if isValidId(adminId) 
+        && isEmailVerified()
+        && isAllowedEmail(request.auth.token.email)
+        && (isAdmin() || request.auth.uid == adminId)
+        && incoming().keys().hasOnly(['email']) 
+        && incoming().email == request.auth.token.email;
+      
+      allow update: if isValidId(adminId) && isAdmin();
+      allow delete: if isValidId(adminId) && isAdmin();
+    }
+
+    // 2. Categories
+    match /categories/{categoryId} {
+      allow get: if isValidId(categoryId);
+      allow list: if true;
+      allow create: if isValidId(categoryId) && isAdmin() 
+        && isValidCategory(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(categoryId) && isAdmin() 
+        && isValidCategory(incoming())
+        && (
+          // Action: Rename or Reorder
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'order'])
+        );
+      allow delete: if isValidId(categoryId) && isAdmin();
+    }
+
+    // 3. Menu Items
+    match /menu_items/{itemId} {
+      allow get: if isValidId(itemId);
+      allow list: if true;
+      allow create: if isValidId(itemId) && isAdmin() && isValidMenuItem(incoming());
+      allow update: if isValidId(itemId) && isAdmin() 
+        && isValidMenuItem(incoming())
+        && (
+          // Action: Full Update or Toggle
+          incoming().diff(existing()).affectedKeys().hasAny(['name', 'description', 'price', 'categoryIds', 'available', 'imageUrl'])
+        );
+      allow delete: if isValidId(itemId) && isAdmin();
+    }
+
+    // 4. Orders
+    match /orders/{orderId} {
+      // Public can track if they have the ID (get)
+      allow get: if isValidId(orderId);
+      
+      // Only admins can list all orders or query them
+      allow list: if isAdmin();
+      
+      // Public create
+      allow create: if isValidId(orderId) 
+        && isValidOrder(incoming())
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time;
+      
+      // Admin updates (status change)
+      allow update: if isValidId(orderId) && isAdmin() 
+        && (
+          // Action: Update Status
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && incoming().status in ['pending', 'confirmed', 'completed', 'cancelled']
+        );
+      
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // 5. Settings
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if true;
+      allow write: if isValidId(settingId) && isAdmin() 
+        && isValidSetting(incoming())
+        && incoming().updatedAt == request.time;
+    }
+  }
+}
