@@ -81,7 +81,7 @@ export default function AdminOrderDetail() {
     if (!orderId) return;
     setUpdatingId(orderId);
     try {
-      const newTotal = tempItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+      const newTotal = tempItems.reduce((sum, it) => sum + (it.price * it.quantity) - (it.discount || 0), 0);
       await updateDoc(doc(db, 'orders', orderId), {
         customerName: tempName,
         phoneNumber: tempPhone,
@@ -139,6 +139,15 @@ export default function AdminOrderDetail() {
     }));
   };
 
+  const updateTempDiscount = (itemId: string, value: number) => {
+    setTempItems(prev => prev.map(it => {
+      if (it.itemId === itemId) {
+        return { ...it, discount: Math.max(0, value) };
+      }
+      return it;
+    }));
+  };
+
   const removeTempItem = (itemId: string) => {
     setTempItems(prev => prev.filter(it => it.itemId !== itemId));
   };
@@ -189,7 +198,11 @@ export default function AdminOrderDetail() {
     
     let text = `Halo Kak ${order.customerName},\n\nTerima kasih telah memesan di toko kami! Berikut adalah rincian tagihan (ID: #${order.id.slice(0, 8)}):\n\n`;
     order.items.forEach(it => {
-      text += `- ${it.name} (${it.quantity}x) = Rp ${(it.price * it.quantity).toLocaleString('id-ID')}\n`;
+      const subtotal = (it.price * it.quantity);
+      text += `- ${it.name} (${it.quantity}x) = Rp ${subtotal.toLocaleString('id-ID')}\n`;
+      if (it.discount) {
+        text += `  Diskon: -Rp ${it.discount.toLocaleString('id-ID')}\n`;
+      }
     });
     text += `\n*TOTAL: Rp ${order.totalPrice.toLocaleString('id-ID')}*\n\n`;
     text += `Mohon segera lakukan pembayaran sesuai nominal di atas, dan kirimkan bukti transfer ke pesan ini. Jika ada pertanyaan, silakan balas chat ini ya.\n\nTerima kasih!`;
@@ -291,6 +304,7 @@ export default function AdminOrderDetail() {
                     <tr className="border-b border-stone-200">
                       <th className="pb-3 text-[10px] font-black text-stone-400 uppercase tracking-widest">Menu</th>
                       <th className="pb-3 text-[10px] font-black text-stone-400 uppercase tracking-widest text-center">Jumlah</th>
+                      <th className="pb-3 text-[10px] font-black text-stone-400 uppercase tracking-widest text-right">Diskon</th>
                       <th className="pb-3 text-[10px] font-black text-stone-400 uppercase tracking-widest text-right">Subtotal</th>
                       {isEditing && <th className="pb-3 text-[10px] font-black text-stone-400 uppercase tracking-widest text-right">Hapus</th>}
                     </tr>
@@ -299,7 +313,10 @@ export default function AdminOrderDetail() {
                     {isEditing ? (
                       tempItems.map((it, idx) => (
                         <tr key={idx} className="border-t border-stone-100/50">
-                          <td className="py-4 text-stone-700">{it.name}</td>
+                          <td className="py-4 text-stone-700">
+                            <div className="font-bold">{it.name}</div>
+                            <div className="text-[10px] text-stone-400">@ Rp {it.price.toLocaleString('id-ID')}</div>
+                          </td>
                           <td className="py-4 text-stone-500 text-center">
                              <div className="flex items-center justify-center gap-3">
                                 <button onClick={() => updateTempQty(it.itemId, -1)} className="p-1.5 bg-white border border-stone-200 rounded-lg hover:text-sharas-primary shadow-sm"><Minus size={14}/></button>
@@ -307,7 +324,18 @@ export default function AdminOrderDetail() {
                                 <button onClick={() => updateTempQty(it.itemId, 1)} className="p-1.5 bg-white border border-stone-200 rounded-lg hover:text-sharas-primary shadow-sm"><Plus size={14}/></button>
                              </div>
                           </td>
-                          <td className="py-4 text-stone-700 text-right font-mono">Rp {(it.price * it.quantity).toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-right">
+                            <div className="relative inline-block w-24">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-stone-400 font-bold">Rp</span>
+                              <input 
+                                type="number"
+                                className="w-full pl-6 pr-2 py-1.5 text-right text-xs font-bold bg-white border border-stone-200 rounded-lg focus:border-sharas-primary outline-none"
+                                value={it.discount || 0}
+                                onChange={(e) => updateTempDiscount(it.itemId, parseInt(e.target.value) || 0)}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-4 text-stone-700 text-right font-mono">Rp {((it.price * it.quantity) - (it.discount || 0)).toLocaleString('id-ID')}</td>
                           <td className="py-4 text-right">
                              <button onClick={() => removeTempItem(it.itemId)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl"><Trash size={16}/></button>
                           </td>
@@ -316,9 +344,13 @@ export default function AdminOrderDetail() {
                     ) : (
                       order.items.map((it, idx) => (
                         <tr key={idx} className="border-t border-stone-100/50">
-                          <td className="py-4 text-stone-700 font-bold">{it.name}</td>
+                          <td className="py-4 font-bold">
+                            <div className="text-stone-700">{it.name}</div>
+                            {it.discount ? <div className="text-[10px] text-green-600 font-black uppercase">Disk: -Rp {it.discount.toLocaleString('id-ID')}</div> : null}
+                          </td>
                           <td className="py-4 text-stone-500 text-center">{it.quantity}x</td>
-                          <td className="py-4 text-stone-700 text-right font-mono">Rp {(it.price * it.quantity).toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-stone-500 text-right">Rp {(it.discount || 0).toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-stone-700 text-right font-mono font-bold">Rp {((it.price * it.quantity) - (it.discount || 0)).toLocaleString('id-ID')}</td>
                         </tr>
                       ))
                     )}

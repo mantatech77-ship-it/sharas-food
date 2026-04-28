@@ -24,6 +24,7 @@ export interface OrderItem {
   price: number;
   costPrice: number;
   quantity: number;
+  discount?: number; // Total discount for this item line (quantity * unit discount or lump sum)
 }
 
 export interface Order {

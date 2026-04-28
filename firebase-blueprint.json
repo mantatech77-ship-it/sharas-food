@@ -28,7 +28,7 @@
     },
     "Order": {
       "title": "Order",
-      "description": "A customer food order",
+      "description": "A customer food order. Items in 'items' array can have an optional 'discount' number property.",
       "type": "object",
       "properties": {
         "customerName": { "type": "string" },

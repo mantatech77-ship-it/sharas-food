@@ -152,7 +152,7 @@ export default function Storefront() {
       if (existing) {
         return prev.map(i => i.itemId === item.id ? { ...i, quantity: i.quantity + quantity } : i);
       }
-      return [...prev, { itemId: item.id, name: item.name, price: item.price, costPrice: item.costPrice || 0, quantity }];
+      return [...prev, { itemId: item.id, name: item.name, price: item.price, costPrice: item.costPrice || 0, quantity, discount: 0 }];
     });
   };
 
@@ -795,14 +795,19 @@ export default function Storefront() {
                        <div className="space-y-3">
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Item Pesanan</p>
                           {trackedOrder.items.map((item, idx) => (
-                             <div key={idx} className="flex justify-between items-center text-sm">
+                             <div key={idx} className="flex justify-between items-start text-sm">
                                 <div className="flex items-center gap-2">
-                                   <span className="bg-gray-100 text-gray-600 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded">
+                                   <span className="bg-gray-100 text-gray-600 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded shrink-0">
                                       {item.quantity}x
                                    </span>
-                                   <span className="font-medium text-gray-700">{item.name}</span>
+                                   <div>
+                                      <span className="font-medium text-gray-700">{item.name}</span>
+                                      {item.discount ? (
+                                        <p className="text-[10px] text-green-600 font-bold uppercase mt-0.5">Diskon: -Rp {item.discount.toLocaleString('id-ID')}</p>
+                                      ) : null}
+                                   </div>
                                 </div>
-                                <span className="font-bold text-gray-900">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</span>
+                                <span className="font-bold text-gray-900">Rp {((item.price * item.quantity) - (item.discount || 0)).toLocaleString('id-ID')}</span>
                              </div>
                           ))}
                        </div>
